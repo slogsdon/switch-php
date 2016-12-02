@@ -1,0 +1,59 @@
+#!/bin/bash
+
+if [[ "" == "$(command -v brew)" ]]; then
+  echo "switch-php requires homebrew to manage installed versions of PHP."
+  echo "Head to http://brew.sh/ to learn more."
+  exit 1
+fi
+
+install() {
+  desired_version=$1
+
+  if [[ "$desired_version" != *"php"* ]]; then
+    desired_version="php$desired_version"
+  fi
+
+  brew tap homebrew/php > /dev/null
+  brew install $desired_version > /dev/null
+
+  echo "$desired_version installed"
+  exit 0
+}
+
+link() {
+  installed_versions=$(brew list | grep -E "^php[0-9]+$" )
+  desired_version=$1
+
+  if [[ "$desired_version" != *"php"* ]]; then
+    desired_version="php$desired_version"
+  fi
+
+  # if desired isn't installed, exit
+  if [[ $installed_versions != *$desired_version* ]]; then
+    echo "Unknown version '$desired_version'"
+    exit 1
+  fi
+
+  for version in $installed_versions; do
+    brew unlink $version > /dev/null
+  done
+
+  brew link $desired_version > /dev/null
+
+  echo "$desired_version activated"
+  exit 0
+}
+
+case $1 in
+  "install" )
+    shift
+    install $@
+    ;;
+  "activate" )
+    shift
+    link $@
+    ;;
+  * )
+    link $@
+    ;;
+esac
